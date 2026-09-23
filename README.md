@@ -102,9 +102,7 @@ bash $T train_clari_nft configs/teacher/pb_nft_s1.yaml
 bash $T train_clari_nft configs/teacher/pb_nft_s2.yaml
 # 2. AnyFlow distillation into CrystAF-base, 4 x 2000 steps (7 GPUs)
 for s in 1 2 3 4; do bash $T train_meanflow_csd configs/distill/stage$s.yaml; done
-# 3. Stage-2 RL. Every arm starts from the PB-rank warm-up (4 GPUs)
-bash $T train_meanflow_nft configs/rl/pb_warmup_1.yaml
-bash $T train_meanflow_nft configs/rl/pb_warmup_2.yaml
+# 3. Stage-2 RL from CrystAF-base (4 GPUs)
 bash $T train_meanflow_nft configs/rl/uma_seed929.yaml     # CrystAF-UMA (epoch 6)
 bash $T train_meanflow_nft configs/rl/pb_seed929.yaml      # CrystAF-PB  (epoch 12)
 ```

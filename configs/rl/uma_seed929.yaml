@@ -4,7 +4,7 @@
 
 checkpoint: checkpoints/clari-med.ckpt
 meanflow_ckpt: checkpoints/crystaf/crystaf-cont3-step2000.pt
-resume_nft: runs/rl_pb_warmup_2/checkpoint-nft-epoch4.pt
+resume_nft: null
 device: cuda
 enable_chiral: false
 meanflow_steps: 16
