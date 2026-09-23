@@ -1,0 +1,56 @@
+# Stage-2 RL with the PoseBusters-rank reward, seed 929.
+# runs/rl_pb_seed929/checkpoint-nft-epoch12.pt is released as
+# checkpoints/crystaf/crystaf-nft-mfpure-epoch12.pt. Reported run: 4 GPUs.
+
+checkpoint: checkpoints/clari-med.ckpt
+meanflow_ckpt: checkpoints/crystaf/crystaf-cont3-step2000.pt
+resume_nft: runs/rl_pb_warmup_2/checkpoint-nft-epoch4.pt
+device: cuda
+enable_chiral: false
+meanflow_steps: 16
+sampler_mode: interval
+sampler_rho: 0.75
+sampler_schedule: power
+sample_batch_size: 20
+clari_data_dir: dataset/clari
+require_csd: true
+reward_mode: pb
+adv_mode: pb_rank
+max_family_tries: 4
+advantage_clip: 1.0
+w_pb: 1.0
+w_clash: 0.0
+top_frac: 0.25
+bottom_frac: 0.25
+clash_veto_positive: true
+skip_flat_pb: false
+drop_neutral_r: true
+vol_rank_weight: 1.0
+clash_rank_weight: 0.0
+nft_velocity_mode: instantaneous
+cd_velocity_source: noise_minus_data
+nft_diffusion_ratio: 0.0
+nft_consistency_ratio: 0.0
+nft_nfe_steps: 8
+nft_grid_rho: 0.75
+nft_cd_eps: 0.005
+nft_share_cd_with_old: true
+nft_student_tune: delta_lora
+lora_rank: 32
+lora_alpha: 64.0
+num_epochs: 12
+steps_per_epoch: 20
+samples_per_mol: 100
+inner_epochs: 1
+train_batch_size: 4
+lr: 2.0e-05
+weight_decay: 0.0001
+max_grad_norm: 1.0
+beta: 0.1
+kl_coef: 0.0001
+forward_anchor_weight: 0.0
+use_ema: true
+ema_decay: 0.999
+save_dir: runs/rl_pb_seed929
+save_every: 1
+seed: 929

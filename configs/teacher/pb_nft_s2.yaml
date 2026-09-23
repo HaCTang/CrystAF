@@ -1,0 +1,46 @@
+# Distillation teacher, part 2: continue at LoRA rank 800.
+# Output runs/teacher_s2/checkpoint-epoch1-eval.pt is released as
+# checkpoints/crystaf/teacher-rank800-pbnft-epoch1.pt. Reported run: 7 GPUs.
+
+checkpoint: checkpoints/clari-med.ckpt
+resume_nft: runs/teacher_s1/checkpoint-epoch0.pt
+device: cuda
+use_ema: true
+n_steps: 16
+data_mode: csd_train
+require_csd: true
+clari_data_dir: dataset/clari
+reward_mode: pb
+student_tune: attn_lora
+lora_rank: 32
+lora_alpha: 64.0
+adv_mode: pb_rank
+top_frac: 0.25
+bottom_frac: 0.25
+clash_veto_positive: true
+skip_flat_pb: true
+min_pb_range: 1.0e-06
+max_family_tries: 4
+drop_neutral_r: true
+num_epochs: 2
+steps_per_epoch: 400
+samples_per_mol: 12
+inner_epochs: 2
+train_batch_size: 4
+lr: 8.0e-05
+weight_decay: 0.0
+max_grad_norm: 1.0
+beta: 0.1
+kl_coef: 0.01
+decay_type: 1
+advantage_clip: 1.0
+w_e: 0.0
+w_f: 0.0
+w_fmax: 0.0
+w_stress: 0.0
+w_pb: 1.0
+w_clash: 0.0
+filter_clashing: false
+save_dir: runs/teacher_s2
+save_every: 1
+seed: 4

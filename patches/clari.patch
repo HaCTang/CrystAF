@@ -1,0 +1,94 @@
+diff --git a/clari/evaluation/compack.py b/clari/evaluation/compack.py
+index 09648b7..1866782 100755
+--- a/clari/evaluation/compack.py
++++ b/clari/evaluation/compack.py
+@@ -58,6 +58,18 @@ def _compare_key(cid: str, exact_ids: bool) -> str:
+     return cid if exact_ids else cid[:6]
+ 
+ 
++# Shard rows carry rmsd=None until a pair matches. polars infers dtypes from the
++# first 100 rows by default, so an id whose first 100 samples all fail to match is
++# inferred as Null and then raises ComputeError on the first real float. Pin it.
++SHARD_SCHEMA = {
++    "sample_idx": pl.Int64,
++    "id": pl.Utf8,
++    "nmatched": pl.Int64,
++    "rmsd": pl.Float64,
++    "exact_ids": pl.Boolean,
++}
++
++
+ def _null(pair: dict) -> dict:
+     return {"row_idx": pair["row_idx"], "nmatched": 0, "rmsd": None}
+ 
+@@ -119,7 +131,16 @@ def _run_rows(
+     timeout_seconds: float,
+     exact_ids: bool,
+     shard_dir: Path | None,
++    skip_sample_idx: set[int] | None = None,
+ ):
++    """``skip_sample_idx`` rows are kept in the output but never compared.
++
++    Sol@k with k < n_s only looks at the top-k by energy, so comparing the rest is
++    wasted work -- but the shard and the final csv must still cover every
++    sample_idx or ``summarize`` rejects them. Skipped rows keep their initial
++    ``nmatched=0, rmsd=None``, which is what they would score if they lost the
++    top-k cut anyway. The result is exact for that k, and wrong for any larger k.
++    """
+     results = [
+         dict(
+             sample_idx=r["sample_idx"], id=_cid(r["id"]), nmatched=0, rmsd=None, exact_ids=exact_ids
+@@ -133,7 +154,11 @@ def _run_rows(
+     written_shards: set[str] = set()
+     for row_idx, row in enumerate(rows):
+         cid = _cid(row["id"])
+-        gt_cifs = gt_by_key.get(_compare_key(cid, exact_ids), [])
++        gt_cifs = (
++            []
++            if skip_sample_idx is not None and row["sample_idx"] in skip_sample_idx
++            else gt_by_key.get(_compare_key(cid, exact_ids), [])
++        )
+         rows_by_id.setdefault(cid, []).append(row_idx)
+         remaining_by_id[cid] = remaining_by_id.get(cid, 0) + len(gt_cifs)
+         pairs.extend(
+@@ -158,7 +183,9 @@ def _run_rows(
+             return
+         shard_dir.mkdir(exist_ok=True)
+         shard_rows = [results[row_idx] for row_idx in rows_by_id[cid]]
+-        pl.DataFrame(shard_rows).sort("sample_idx").write_csv(shard_dir / f"{cid}.csv")
++        pl.DataFrame(shard_rows, schema=SHARD_SCHEMA).sort("sample_idx").write_csv(
++            shard_dir / f"{cid}.csv"
++        )
+         written_shards.add(cid)
+ 
+     def update(result: dict) -> None:
+diff --git a/clari/evaluation/sample.py b/clari/evaluation/sample.py
+index 7ec5a0f..899d947 100644
+--- a/clari/evaluation/sample.py
++++ b/clari/evaluation/sample.py
+@@ -110,6 +110,25 @@ def load_lit(ckpt_path, use_ema, device, n_steps):
+ 
+     cfg.online_softmax = False
+     lit.configure_model()
++    # CrystAF: swap the Clari DiT for the MeanFlow/AnyFlow student when asked.
++    # Driven by env rather than a new argument because `main` fans out to worker
++    # processes that only receive the checkpoint path -- and the sampling-time
++    # correctors (CRYSTAF_MIRROR_FIX / _MMFF / _RELAX_CLASH / _VOL_SCALE) are read
++    # inside MeanFlowCrystalSampler the same way, so one mechanism covers both.
++    # MeanFlowCrystalSampler.sample has the same signature as Clari's, so the
++    # call sites below are unchanged.
++    mf_ckpt = os.environ.get("CRYSTAF_MEANFLOW_CKPT", "").strip()
++    if mf_ckpt:
++        from crystal_nft.meanflow.adapter import apply_meanflow_checkpoint_to_lit
++
++        steps = os.environ.get("CRYSTAF_MEANFLOW_STEPS", "")
++        apply_meanflow_checkpoint_to_lit(
++            lit,
++            mf_ckpt,
++            meanflow_steps=int(steps) if steps else int(n_steps or 32),
++            load_ema=use_ema,
++        )
++        lit = lit.to(device).eval()
+     return lit
+ 
+ 

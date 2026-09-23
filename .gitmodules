@@ -1,0 +1,6 @@
+[submodule "CrystalGenModel/clari"]
+	path = CrystalGenModel/clari
+	url = https://github.com/aspuru-guzik-group/clari
+[submodule "CrystalGenModel/MolCrystalFlow"]
+	path = CrystalGenModel/MolCrystalFlow
+	url = https://github.com/Liu-Group-UF/MolCrystalFlow

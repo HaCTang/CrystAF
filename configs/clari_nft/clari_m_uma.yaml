@@ -1,0 +1,36 @@
+# UMA-reward NFT on multi-step Clari-M (1000 CSD families).
+# runs/clari_m_uma/checkpoint-epoch1.pt is released as
+# checkpoints/crystaf/clari-m-uma-nft-epoch1.pt. Reported run: 4 GPUs.
+
+checkpoint: checkpoints/clari-med.ckpt
+device: cuda
+use_ema: true
+n_steps: 20
+data_mode: csd_train
+require_csd: true
+clari_data_dir: dataset/clari
+num_epochs: 2
+steps_per_epoch: 1000
+samples_per_mol: 8
+inner_epochs: 1
+train_batch_size: 4
+lr: 3.0e-07
+weight_decay: 0.0
+max_grad_norm: 1.0
+beta: 0.1
+kl_coef: 0.01
+decay_type: 1
+ef_lambda: 0.5
+advantage_clip: 5.0
+adv_mode: continuous
+w_clash: 1.0
+w_fmax: 0.25
+w_stress: 0.1
+uma_model: uma-s-1p1
+uma_ckpt_path: checkpoints/uma/uma-s-1p1.pt
+uma_batch_size: 4
+use_ultrafast: false
+filter_clashing: false
+save_dir: runs/clari_m_uma
+save_every: 1
+seed: 0
