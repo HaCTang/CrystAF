@@ -122,6 +122,10 @@ def _load_config(path: str | None) -> dict:
         "max_family_tries": 4,
         "drop_neutral_r": False,
         "w_clash": 1.0,
+        # Energy / mean-force channel switches for reward ablations. 1.0 keeps
+        # the original behaviour; ef_lambda still sets their relative weight.
+        "w_e": 1.0,
+        "w_f": 1.0,
         "w_fmax": 0.0,
         "w_stress": 0.25,
         "w_alignment": 1.0,
@@ -370,6 +374,8 @@ def _score_uma_group(cfg: dict, candidates, template, family_id: str, scorer):
         advantage_clip=float(cfg["advantage_clip"]),
         adv_mode=str(cfg["adv_mode"]),
         w_clash=float(cfg["w_clash"]),
+        w_e=float(cfg.get("w_e", 1.0)),
+        w_f=float(cfg.get("w_f", 1.0)),
         w_fmax=float(cfg["w_fmax"]),
         w_stress=float(cfg["w_stress"]),
         w_alignment=float(cfg["w_alignment"]),

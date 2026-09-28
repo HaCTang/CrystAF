@@ -6,9 +6,13 @@
 #
 # The power-law grid t_i = (i/N)^rho uses the reported rho per NFE:
 # 8 -> 0.30, 16 -> 0.75, 32 and 50 -> 1. Override with MEANFLOW_INTERVAL_RHO.
-# Sampling-time correctors are read from the environment, e.g. for "CrystAF-S":
-#   CRYSTAF_MIRROR_FIX=body CRYSTAF_STEREO_REFLECT=1 CRYSTAF_MMFF=1 \
-#   CRYSTAF_RELAX_CLASH=1 CRYSTAF_VOL_SCALE=0.9850 bash scripts/eval_crystaf.sh ...
+# Inference-time methods are read from the environment:
+#   classical chain   CRYSTAF_MIRROR_FIX=body CRYSTAF_STEREO_REFLECT=1 CRYSTAF_MMFF=1 CRYSTAF_RELAX_CLASH=1
+#   cell calibration  CRYSTAF_VOL_SCALE=0.9850
+#   UMA guidance      CRYSTAF_UMA_GUIDE=<eta> CRYSTAF_UMA_GUIDE_MAXDISP=<delta> CRYSTAF_UMA_GUIDE_TSTART=0.5
+#   UMA relaxation    CRYSTAF_UMA_RELAX=<steps>          (fixed cell, 0.05 A per step)
+#   PCFM projection   CRYSTAF_PCFM_BOND=1                (bonds only, no chirality term)
+# CRYSTAF_EVAL_UMA_SCORE=1 adds UMA single-point diagnostics per sample (untimed).
 # The headline numbers are summary.paper_bootstrap in <out_dir>/metrics.json.
 set -euo pipefail
 source "$(dirname "$0")/../env/paths.sh"

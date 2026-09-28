@@ -14,9 +14,10 @@ Example (run inside the Clari environment)::
 
   CrystalGenModel/clari/.venv/bin/python \
     scripts/analysis/analyze_uma_compack.py \
-    runs/table3/crystaf-uma_oxtal \
-    runs/table3/clari-m_oxtal \
-    --output runs/table3/uma_compack_enrichment.json
+    runs/table3/crystaf-uma_oxtal_ns400 \
+    runs/table3/clari-m_oxtal_ns400 \
+    runs/table3/clari-l_oxtal_ns400 \
+    --k 200 --output runs/table3/uma_compack_enrichment.json
 """
 
 from __future__ import annotations

@@ -953,6 +953,22 @@ def run_eval(
 
     sample_t0 = time.perf_counter()
     sample_n = 0
+    gen_sec = [0.0]
+    gen_calls: list[tuple[float, int]] = []
+
+    def _timed_sample(lit_obj, replicas):
+        # Generation-only wall clock (network + any sampling-time correction),
+        # excluding metric assessment, for the cost column of the paper.
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+        t0 = time.perf_counter()
+        out = _sample_microbatch(lit_obj, replicas)
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+        dt_call = time.perf_counter() - t0
+        gen_sec[0] += dt_call
+        gen_calls.append((dt_call, len(replicas)))
+        return out
     # Stream scalar metric rows only — never all_gather Crystal objects.
     shard_jsonl = output_dir / f"metrics.shard{rank}.jsonl"
     done_keys: set[tuple[int, int]] = set()
@@ -1016,6 +1032,14 @@ def run_eval(
         def _flush_assess(preds, chunk) -> None:
             nonlocal n_assess_fail
             rows = _assess_chunk_rows(preds, chunk, **assess_kw)
+            if os.environ.get("CRYSTAF_EVAL_UMA_SCORE", "0") not in ("", "0"):
+                # UMA single-point diagnostics of the generated structure. Runs
+                # after (and outside) the timed sampler call, so it never enters
+                # the cost column.
+                from crystal_nft.meanflow.physics_injection import uma_diagnostics
+
+                for row, diag in zip(rows, uma_diagnostics(preds)):
+                    row.update(diag)
             n_assess_fail += _append_metric_rows(
                 shard_jsonl,
                 rows,
@@ -1033,7 +1057,7 @@ def run_eval(
                 prev_chunk = None
                 for chunk in chunk_list:
                     replicas = [pack_crystals[pack_i] for pack_i, _ in chunk]
-                    preds = _sample_microbatch(lit, replicas)
+                    preds = _timed_sample(lit, replicas)
                     sample_n += len(preds)
                     if prev_fut is not None:
                         prev_fut.result()
@@ -1046,7 +1070,7 @@ def run_eval(
         else:
             for chunk in chunk_list:
                 replicas = [pack_crystals[pack_i] for pack_i, _ in chunk]
-                preds = _sample_microbatch(lit, replicas)
+                preds = _timed_sample(lit, replicas)
                 sample_n += len(preds)
                 _flush_assess(preds, chunk)
                 del preds, replicas, chunk
@@ -1067,6 +1091,11 @@ def run_eval(
         "sampling_wall_sec_local": sample_elapsed,
         "sampling_n_local": sample_n,
         "ms_per_sample_local": 1000.0 * sample_elapsed / max(sample_n, 1),
+        "gen_sec_local": gen_sec[0],
+        "gen_ms_per_sample_local": 1000.0 * gen_sec[0] / max(sample_n, 1),
+        # per sampler call (seconds, structures); drop the first for warm-up
+        "gen_calls_local": gen_calls,
+        "physics_stats_local": dict(__import__("crystal_nft.meanflow.physics_injection", fromlist=["STATS"]).STATS),
         "model_key": model_key,
         "clari_data_dir": str(clari_data_dir),
         "samples": samples,
@@ -1158,6 +1187,12 @@ def parse_args():
         default=str(_REPO_ROOT / "dataset" / "clari"),
     )
     p.add_argument("--max-crystals", type=int, default=None)
+    p.add_argument(
+        "--sample-chunk",
+        type=int,
+        default=1,
+        help="Samples per sampler call (the CrystAF evals use 20)",
+    )
     p.add_argument("--device", type=str, default="cuda")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument(
@@ -1279,6 +1314,7 @@ def main():
         assess_mem_gb=float(args.assess_mem_gb),
         assess_in_subprocess=bool(args.assess_in_subprocess),
         overlap_assess=bool(args.overlap_assess),
+        sample_chunk=max(1, int(args.sample_chunk)),
     )
 
 

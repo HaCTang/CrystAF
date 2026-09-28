@@ -17,6 +17,7 @@ from clari.geometry import zero_com_suffix
 from clari.pipelines.base.samplers import HeunSampler
 from clari.pipelines.utils import bcast_right
 
+from crystal_nft.meanflow import physics_injection as _physics
 from crystal_nft.meanflow.interface import MeanFlowCrystalInterface
 
 
@@ -1237,6 +1238,10 @@ class MeanFlowCrystalSampler:
                 z = _pcfm_correct_step(
                     z_prev=z_prev, z=z, u=u_sc, t_from=t_from, t_to=t_to, step=i
                 )
+                if _physics.guidance_enabled():
+                    z = _physics.force_guidance_step(
+                        z_prev=z_prev, z=z, u=u_sc, t_from=t_from, t_to=t_to, C=C
+                    )
                 if _self_cond_enabled(net):
                     xsc = interface.estimate_x1(xt=z_prev, t=t_from, pred=u_sc)
                     xsc = zero_com_suffix(xsc, w=C.mask)
@@ -1257,6 +1262,7 @@ class MeanFlowCrystalSampler:
         z = _pcfm_mmff_relax(z, C.replace(x=z))
         z = _pcfm_bond_project(z)
         z = _pcfm_relax_clashes(z, C.replace(x=z))
+        z = _physics.relax_post(z, C)
         z = zero_com_suffix(z, w=C.mask)
         if return_trajectory:
             return torch.stack(traj)

@@ -18,7 +18,7 @@ NFT="${4:-}"
 NPROC="${NPROC:-$(python3 -c 'import os,subprocess;v=os.environ.get("CUDA_VISIBLE_DEVICES");print(len(v.split(",")) if v else len(subprocess.check_output(["nvidia-smi","-L"]).splitlines()))')}"
 MAX="${MAX_CRYSTALS:-200}"
 
-ARGS=()
+ARGS=(--sample-chunk "${SAMPLE_CHUNK:-1}")
 [[ "${MAX}" != "0" ]] && ARGS+=(--max-crystals "${MAX}")
 [[ -n "${NFT}" ]] && ARGS+=(--nft-ckpt "${NFT}")
 
