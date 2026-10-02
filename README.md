@@ -76,9 +76,13 @@ bash $T train_meanflow_umadistill configs/ablation/relax_distill.yaml           
 Code: MIT. Weights: CC-BY-NC-4.0 (derived from Clari). Submodules and the CSD keep their own licences.
 
 ```bibtex
-@misc{tang2026physics,
-  title  = {Where Should Physics Enter a Molecular Crystal Generator?},
-  author = {Tang, Haocheng and Wang, Junmei and Jin, Wengong},
-  year   = {2026}
+@misc{tang2026physicsentermolecularcrystal,
+      title={Where Should Physics Enter a Molecular Crystal Generator?}, 
+      author={Haocheng Tang and Junmei Wang and Wengong Jin},
+      year={2026},
+      eprint={2609.36398},
+      archivePrefix={arXiv},
+      primaryClass={q-bio.BM},
+      url={https://arxiv.org/abs/2609.36398}, 
 }
 ```
