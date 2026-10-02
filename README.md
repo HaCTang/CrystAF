@@ -2,7 +2,7 @@
 
 Code, configs, evaluation scripts and figure data (`figures/`) for the paper.
 
-CrystAF is an all-atom crystal flow map `z_t = z_r + (t - r) U(z_r, r, t)` distilled from Clari-M.
+**CrystAF** (**Cryst**al**A**ny**F**low) is an all-atom crystal flow map `z_t = z_r + (t - r) U(z_r, r, t)` distilled from Clari-M.
 With CrystAF and the UMA-OMC potential held fixed, the paper compares where the same physical
 signal enters: at training time (relax-and-distill), in post-training (NFT through the flow-map
 identity `V = U - (t - r) D_r U`), or at inference time (UMA guidance / relaxation, PCFM, a
